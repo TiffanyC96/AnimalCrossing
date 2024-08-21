@@ -244,8 +244,8 @@ export const getOneGyroid = async(gyroid)=>{
 
 export const getCurrentCritters = async (hemisphere = 'north') => {
     try {
-      const critters = [];
-      const currentMonth = 'current';
+      const currentMonth = new Date().getMonth() + 1; // Get current month (0-based index, so add 1)
+      const currentHour = new Date().getHours(); // Get the current hour in 24-hour format
   
       const endpoints = ['/nh/bugs', '/nh/fish', '/nh/sea'];
   
@@ -254,28 +254,74 @@ export const getCurrentCritters = async (hemisphere = 'north') => {
         endpoints.map(endpoint =>
           NookipediaService.get(endpoint, {
             params: {
-              month: currentMonth,
+              month: currentMonth, // Use the actual month instead of 'current'
             },
           })
         )
       );
   
       // Extract critters based on hemisphere
-      const bugs = bugResponse.data[hemisphere];
-      const fish = fishResponse.data[hemisphere];
-      const seaCreatures = seaResponse.data[hemisphere];
+      const extractCritters = (response) => {
+        const data = response?.data;
+        if (!data || !data[hemisphere]) return [];
+        return data[hemisphere];
+      };
+  
+      const bugs = extractCritters(bugResponse);
+      const fish = extractCritters(fishResponse);
+      const seaCreatures = extractCritters(seaResponse);
   
       // Combine all critters into one array
-      critters.push(...bugs, ...fish, ...seaCreatures);
+      const allCritters = [...bugs, ...fish, ...seaCreatures];
   
-      // Optional: Filter critters by availability based on the current hour
-      const now = new Date();
-      const currentHour = format(now, 'H');
+      // Filter critters based on current time
+      const catchableCritters = allCritters.filter(critter => {
+        const time = critter?.time;
+        console.log("Time: ", time)
+        if (!time) {
+          return false;
+        }
   
+        if (time === 'All day') {
+          return true;
+        }
   
-      return critters;
+        // Handle time range conversion and checking
+        const [startTime, endTime] = time?.split(' – ').map(t => convertTo24Hour(t));
+        const startHour = parseInt(startTime?.split(':')[0], 10);
+        const endHour = parseInt(endTime?.split(':')[0], 10);
+  
+        if (startHour <= endHour) {
+          // If the time range doesn't cross midnight
+          return currentHour >= startHour && currentHour < endHour;
+        } else {
+          // If the time range crosses midnight (e.g., "8 PM – 4 AM")
+          return currentHour >= startHour || currentHour < endHour;
+        }
+      });
+  
+      console.log("Catchable Critters:", catchableCritters); // Debugging
+  
+      return catchableCritters;
     } catch (error) {
       console.error('Error fetching current critters:', error);
       throw error;
     }
   };
+  
+  // Utility function to convert 12-hour time to 24-hour format
+  function convertTo24Hour(time) {
+    let [hour, modifier] = time.split(' ');
+    let [hours, minutes] = hour.split(':').map(Number);
+  
+    if (modifier === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (modifier === 'AM' && hours === 12) {
+      hours = 0;
+    }
+  
+    return `${hours.toString().padStart(2, '0')}:${minutes || '00'}`;
+  }
+  
+  
+  

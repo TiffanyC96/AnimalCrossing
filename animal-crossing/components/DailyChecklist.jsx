@@ -42,9 +42,6 @@ const DailyChecklist = ()=>{
             </View>
           ))}
         </View>
-        <Button mode="contained" onPress={resetChecklist} style={styles.resetButton}>
-          Reset Checklist
-        </Button>
       </View>
     );
   };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, ScrollView } from 'react-native';
-import { Checkbox, List, Text, Button } from 'react-native-paper';
+import { View, ActivityIndicator, ScrollView, Image } from 'react-native';
+import { Checkbox, List, Text, Button, Card } from 'react-native-paper';
 import { getCurrentCritters } from '../Nookipedia';
 
 const CrittersScreen = ({ hemisphere = 'northern' }) => {
@@ -30,11 +30,15 @@ const CrittersScreen = ({ hemisphere = 'northern' }) => {
     <ScrollView>
       {critters.length > 0 ? (
         critters.map((critter, index) => (
-          <View key={index} style={{ marginBottom: 20, padding: 10, backgroundColor: '#f0f0f0', borderRadius: 10 }}>
-            <Text>Name: {critter.name}</Text>
-            <Text>Location: {critter.location}</Text>
-            <Text>Price: {critter.price} Bells</Text>
-          </View>
+          <Card key={index} style={{ marginBottom: 20, padding: 10, backgroundColor: '#f0f0f0', borderRadius: 10 }}>
+            <Card.Title title={critter.name} />
+            <Image source={{uri: critter.image_url}} style={{width:100, height:100}}/>
+            <Card.Content>
+              <Text>Location: {critter.location}</Text>
+              <Text>Selling Price: {critter.sell_nook} Bells</Text>
+            </Card.Content>
+
+          </Card>
         ))
       ) : (
         <Text>No critters available right now</Text>
